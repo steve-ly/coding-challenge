@@ -27,6 +27,9 @@ function calculateValues() {
     }); 
 
     //final modifications to gross_profit
+    gross_profit = gross_profit / total_revenue
+    //net profit calculation
+    net_profit = (total_revenue - total_expenses) / total_revenue
 }
 
 calculateValues()
