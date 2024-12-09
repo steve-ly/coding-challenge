@@ -12,7 +12,11 @@ function calculateValues() {
 
     //loop through data object
     req_data.forEach(item => {
-        //
+        //add to revenue 
+        if (item.account_category === "revenue") {
+            total_revenue = total_revenue + item.total_value
+        }
+        //add
     }); 
 }
 
