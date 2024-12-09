@@ -16,8 +16,17 @@ function calculateValues() {
         if (item.account_category === "revenue") {
             total_revenue = total_revenue + item.total_value
         }
-        //add
+        //add to expenses
+        if (item.account_category === "expense") {
+            total_revenue = total_revenue + item.total_value
+        } 
+        //add to gross profits
+        if (item.account_category === "sales" && item.value_type === "debit") {
+            total_revenue = total_revenue + item.total_value
+        } 
     }); 
+
+    //final modifications to gross_profit
 }
 
 calculateValues()
