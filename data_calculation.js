@@ -1,49 +1,108 @@
-// Unit tests using Mocha and unit.js
-const { calculateValues } = require('./data_calculation');
-const test = require('unit.js');
-
-const mockData = [
-  { account_category: 'revenue', total_value: 1000 },
-  { account_category: 'revenue', total_value: 500 },
-  { account_category: 'expense', total_value: 200 },
-  { account_category: 'expense', total_value: 300 },
-  { account_type: 'sales', value_type: 'debit', total_value: 400 },
-  { account_type: 'sales', value_type: 'debit', total_value: 300 },
-  { account_category: 'assets', value_type: 'debit', account_type: 'current', total_value: 1000 },
-  { account_category: 'assets', value_type: 'credit', account_type: 'current', total_value: 200 },
-  { account_category: 'liability', value_type: 'credit', account_type: 'current', total_value: 300 },
-  { account_category: 'liability', value_type: 'debit', account_type: 'current', total_value: 100 }
-];
-
-describe('Metrics Calculations', () => {
-  it('should correctly calculate total revenue', () => {
-    const { total_revenue } = calculateValues(mockData);
-    test.value(total_revenue).is(1500); // 1000 + 500
-  });
-
-  it('should correctly calculate total expenses', () => {
-    const { total_expenses } = calculateValues(mockData);
-    test.value(total_expenses).is(500); // 200 + 300
-  });
-
-  it('should correctly calculate gross profit margin', () => {
-    const { gross_profit, total_revenue } = calculateValues(mockData);
-    const expectedGrossProfitMargin = (700 / 1500) * 100; // (400 + 300) / 1500
-    test.value(gross_profit * 100).is(expectedGrossProfitMargin); // should be 46.67%
-  });
-
-  it('should correctly calculate net profit margin', () => {
-    const { net_profit, total_revenue, total_expenses } = calculateValues(mockData);
-    const expectedNetProfitMargin = ((total_revenue - total_expenses) / total_revenue) * 100; // ((1500 - 500) / 1500)
-    test.value(net_profit * 100).is(expectedNetProfitMargin); // should be 66.67%
-  });
-
-  it('should correctly calculate working capital ratio', () => {
-    const { working_capital_ratio } = calculateValues(mockData);
-    const expectedAssets = 1000 - 200; // 1000 debit (assets) - 200 credit (assets)
-    const expectedLiabilities = 300 - 100; // 300 credit (liabilities) - 100 debit (liabilities)
-    const expectedWorkingCapitalRatio = (expectedAssets / expectedLiabilities); // (800 / 200) = 4 (400% when expressed as percentage)
+function calculateValues() {
+    //parse data
+    const json_object = require('./data.json');
+    const req_data = json_object["data"];
     
-    test.value(working_capital_ratio).is(expectedWorkingCapitalRatio); // should be 4 (or 400% if converted to percentage)
-  });
+    //initialize values
+    let total_revenue = 0;
+    let total_expenses = 0;
+    let gross_profit = 0;
+    let net_profit = 0;
+    let working_capital_assets = 0;
+    let working_capital_liabilities = 0;
+
+    //loop through data object
+    req_data.forEach(item => {
+        //add to revenue
+        if (item.account_category === "revenue") {
+            total_revenue += item.total_value;
+        }
+        //add to expenses
+        if (item.account_category === "expense") {
+            total_expenses += item.total_value; // fixed to add total_value to expenses
+        }
+        //add to gross profits
+        if (item.account_category === "sales" && item.value_type === "debit") {
+            gross_profit += item.total_value;
+        }
+        //add or subtract from assets
+        if (item.account_category === "assets" && 
+            (item.account_type === "current" || item.account_type === "bank" || item.account_type === "current_accounts_receivable")) {
+            if (item.value_type === "debit") {
+                working_capital_assets += item.total_value;
+            }
+            if (item.value_type === "credit") {
+                working_capital_assets -= item.total_value;
+            }
+        }
+        //add or subtract from liabilities
+        if (item.account_category === "liability" && 
+            (item.account_type === "current" || item.account_type === "current_accounts_receivable")) {
+            if (item.value_type === "credit") {
+                working_capital_liabilities += item.total_value;
+            }
+            if (item.value_type === "debit") {
+                working_capital_liabilities -= item.total_value;
+            }
+        }
+    });
+
+    //final modifications to gross_profit
+    gross_profit = gross_profit / total_revenue;
+    //net profit calculation
+    net_profit = (total_revenue - total_expenses) / total_revenue;
+    //working capital ratio
+    let working_capital_ratio = working_capital_assets / working_capital_liabilities;
+
+    return {
+        total_revenue,
+        total_expenses,
+        gross_profit,
+        net_profit,
+        working_capital_ratio
+    };
+}
+
+function format_data(data) {
+    const { revenue, expenses, grossProfitMargin, netProfitMargin, workingCapitalRatio } = data;
+
+    // Format currency (check if values are valid numbers)
+    const formatCurrency = (value) => {
+        if (value != null && !isNaN(value)) {
+            return `$${value.toLocaleString()}`;
+        }
+        return '$0'; // Fallback if the value is undefined or NaN
+    };
+    
+    // Format percentages (check if values are valid numbers)
+    const formatPercentage = (value) => {
+        if (value != null && !isNaN(value)) {
+            return `${value.toFixed(0)}%`;
+        }
+        return '0%'; // Fallback if the value is undefined or NaN
+    };
+
+    return `
+    Revenue: ${formatCurrency(revenue)}
+    Expenses: ${formatCurrency(expenses)}
+    Gross Profit Margin: ${formatPercentage(grossProfitMargin)}
+    Net Profit Margin: ${formatPercentage(netProfitMargin)}
+    Working Capital Ratio: ${formatPercentage(workingCapitalRatio)}
+  `;
+}
+
+// Example usage:
+const { total_revenue, total_expenses, gross_profit, net_profit, working_capital_ratio } = calculateValues();
+
+// Format the data
+const formattedData = format_data({
+    revenue: total_revenue,
+    expenses: total_expenses,
+    grossProfitMargin: gross_profit,
+    netProfitMargin: net_profit,
+    workingCapitalRatio: working_capital_ratio
 });
+
+console.log(formattedData);
+
+module.exports = { calculateValues };
