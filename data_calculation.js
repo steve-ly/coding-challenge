@@ -30,3 +30,5 @@ function calculateValues() {
 }
 
 calculateValues()
+
+module.exports = {calculateValues}

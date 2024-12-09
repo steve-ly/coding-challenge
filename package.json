@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "mocha": "^11.0.1",
+    "unit.js": "^2.1.1"
+  }
+}
