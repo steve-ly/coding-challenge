@@ -1,8 +1,4 @@
-function calculateValues() {
-    //parse data
-    const json_object = require('./data.json');
-    const req_data = json_object["data"];
-    
+function calculateValues(req_data) {    
     //initialize values
     let total_revenue = 0;
     let total_expenses = 0;
@@ -91,8 +87,11 @@ function format_data(data) {
   `;
 }
 
-// Example usage:
-const { total_revenue, total_expenses, gross_profit, net_profit, working_capital_ratio } = calculateValues();
+//Usage:
+//parse data
+const json_object = require('./data.json');
+const req_data = json_object["data"];
+const { total_revenue, total_expenses, gross_profit, net_profit, working_capital_ratio } = calculateValues(req_data);
 
 // Format the data
 const formattedData = format_data({
